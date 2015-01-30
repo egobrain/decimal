@@ -1,0 +1,12 @@
+{application, decimal,
+ [
+  {description, "Decimal library"},
+  {vsn, git},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { decimal_app, []}},
+  {env, []}
+ ]}.

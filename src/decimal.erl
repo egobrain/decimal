@@ -1,35 +1,68 @@
 -module(decimal).
 
+%% Converters
 -export([
-         to_decimal/2
+         to_decimal/2,
+         to_binary/1
         ]).
 
+%% Arith
 -export([
+         add/2,
+         sub/2,
+         mult/2,
+         divide/3
+        ]).
+
+%% Compare
+-export([
+         cmp/3
+        ]).
+
+%% Utils
+-export([
+         abs/1,
+         minus/1,
          reduce/1,
-         round/2
+         round/3
         ]).
-
--compile(export_all).
 
 -type decimal() :: {integer(), integer()}.
--type opts() :: #{ precision => non_neg_integer()}.
+-type rounding_algorithm() :: floor | ciel | half_up.
+-type opts() :: #{
+              precision => non_neg_integer(),
+              rounding => rounding_algorithm()
+           }.
+
+-export_type([
+              decimal/0,
+              opts/0,
+              rounding_algorithm/0
+             ]).
+
+%% =============================================================================
+%%% API
+%% =============================================================================
+
+%% = Converters ================================================================
 
 -spec to_decimal(Value, Opts) -> {ok, decimal()} | {error, Reason} when
       Value :: integer() | float() | binary() | list() | decimal(),
       Opts :: opts(),
       Reason :: any().
-to_decimal({Int, E}=Decimal, #{precision := Precision}) when
+to_decimal({Int, E}=D, #{precision := Precision, rounding := Rounding}) when
       is_integer(Int), is_integer(E) ->
-    Rounded = round(Decimal, Precision),
+    Rounded = round(Rounding, D, Precision),
     {ok, Rounded};
-to_decimal(Int, #{precision := Precision}) when
+to_decimal(Int, #{precision := Precision, rounding := Rounding}) when
       is_integer(Int) ->
-    Rounded = round({Int, 0}, Precision),
+    Rounded = round(Rounding, {Int, 0}, Precision),
     {ok, Rounded};
-to_decimal(Binary, #{precision := Precision}) when is_binary(Binary) ->
+to_decimal(Binary, #{precision := Precision, rounding := Rounding}) when
+      is_binary(Binary) ->
     case decimal_conv:from_binary(Binary) of
         {ok, Decimal} ->
-            {ok, round(Decimal, Precision)};
+            {ok, round(Rounding, Decimal, Precision)};
         {error, _Reason} = Err -> Err
     end;
 to_decimal(Float, Opts) when
@@ -39,6 +72,10 @@ to_decimal(Float, Opts) when
 to_decimal(List, Opts) ->
     Bin = list_to_binary(List),
     to_decimal(Bin, Opts).
+
+-spec to_binary(decimal()) -> binary().
+to_binary(Decimal) ->
+    decimal_conv:to_binary(Decimal).
 
 %% = Arith =====================================================================
 
@@ -58,9 +95,9 @@ mult({Int1, E1}, {Int2, E2}) ->
     {Int1*Int2, E1+E2}.
 
 -spec divide(decimal(), decimal(), opts()) -> decimal().
-divide(A, B, #{ precision := Precision}) ->
-    {Int1, E1} = round(A, Precision),
-    {Int2, E2} = round(B, Precision),
+divide(A, B, #{ precision := Precision, rounding := Rounding }) ->
+    {Int1, E1} = round(Rounding, A, Precision),
+    {Int2, E2} = round(Rounding, B, Precision),
     case is_zero(B) of
         true -> error(badarith);
         _ ->
@@ -74,9 +111,9 @@ divide(A, B, #{ precision := Precision}) ->
 %% = Compare ===================================================================
 
 -spec cmp(decimal(), decimal(), opts()) -> -1 | 0 | 1.
-cmp(A, B, #{ precision := Precision }) ->
-    {Int1, E1} = round(A, Precision),
-    {Int2, E2} = round(B, Precision),
+cmp(A, B, #{ precision := Precision, rounding := Rounding }) ->
+    {Int1, E1} = round(Rounding, A, Precision),
+    {Int2, E2} = round(Rounding, B, Precision),
 
     Emin = min(E1, E2),
     B1 = Int1*pow_of_ten(E1-Emin),
@@ -109,16 +146,30 @@ reduce_(Int, E) ->
         _ -> {Int, E}
     end.
 
--spec round(decimal(), non_neg_integer()) -> decimal().
-round(Decimal, Precision) ->
+-spec round(rounding_algorithm(), decimal(), non_neg_integer()) -> decimal().
+round(Rounding, Decimal, Precision) ->
     {Int, E} = reduce(Decimal),
     case -Precision-E of
         Delta when Delta > 0 ->
-            P = pow_of_ten(Delta),
-            {Int div P, E+Delta};
+            round_(Rounding, Int, E, Delta);
         _ ->
             Decimal
     end.
+round_(floor, Int, E, Delta) ->
+    P = pow_of_ten(Delta),
+    {Int div P, E+Delta};
+round_(Rounding, Int, E, Delta) ->
+    P = pow_of_ten(Delta-1),
+    Data = Int div P,
+    Floor = Data div 10,
+    LastDigit = Data-(Floor*10),
+    Base =
+        case Rounding of
+            half_up when LastDigit >= 5 -> Floor+1;
+            ciel when LastDigit > 0 -> Floor+1;
+            _ -> Floor
+        end,
+    {Base, E+Delta}.
 
 %% =============================================================================
 %%% Internal functions

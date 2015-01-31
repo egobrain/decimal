@@ -11,21 +11,26 @@ from_binary(Bin) ->
 
 -spec to_binary(decimal:decimal()) -> binary().
 to_binary({Int, E}) ->
-    Shift =
+    Sign =
         case Int < 0 of
-            true -> 1;
-            false -> 0
+            true -> <<$->>;
+            false -> <<>>
         end,
-    Bin = integer_to_binary(Int),
-    Size = byte_size(Bin),
-    case Size-Shift of
+    <<Ch, _/binary>> = Bin = integer_to_binary(abs(Int)),
+    Bin2 =
+        case Ch of
+            $1 -> Bin;
+            _ -> <<$0, Bin/binary>>
+        end,
+    Size = byte_size(Bin2),
+    case Size of
         1 ->
-            <<Bin/binary, (e(E))/binary>>;
+            <<Sign/binary, Bin2/binary, (e(E))/binary>>;
         _ ->
-            S = (Shift+1),
-            <<B:S/binary, R/binary>> = Bin,
-            <<B/binary, $., R/binary, (e(E+Size-S))/binary>>
+            <<B:1/binary, R/binary>> = Bin2,
+            <<Sign/binary, B/binary, $., R/binary, (e(E+Size-1))/binary>>
     end.
+
 
 e(0) -> <<>>;
 e(E) -> <<$e, (integer_to_binary(E))/binary>>.

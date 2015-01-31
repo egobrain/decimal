@@ -103,9 +103,9 @@ divide(A, B, #{ precision := Precision, rounding := Rounding }) ->
         _ ->
             Emin = min(E1, E2),
             Int =
-                (Int1*pow_of_ten(E1-Emin+Precision)) div
+                (Int1*pow_of_ten(E1-Emin+Precision+1)) div
                 (Int2*pow_of_ten(E2-Emin)),
-            reduce({Int, -Precision})
+            round(Rounding, {Int, -Precision-1}, Precision)
     end.
 
 %% = Compare ===================================================================
@@ -148,17 +148,19 @@ reduce_(Int, E) ->
 
 -spec round(rounding_algorithm(), decimal(), non_neg_integer()) -> decimal().
 round(Rounding, Decimal, Precision) ->
-    {Int, E} = reduce(Decimal),
+    {Int, E} = Rounded = reduce(Decimal),
     case -Precision-E of
         Delta when Delta > 0 ->
             round_(Rounding, Int, E, Delta);
         _ ->
-            Decimal
+            Rounded
     end.
 round_(floor, Int, E, Delta) ->
     P = pow_of_ten(Delta),
     {Int div P, E+Delta};
-round_(Rounding, Int, E, Delta) ->
+round_(Rounding, Int, E, Delta) when
+      Rounding =:= half_up;
+      Rounding =:= ciel ->
     P = pow_of_ten(Delta-1),
     Data = Int div P,
     Floor = Data div 10,

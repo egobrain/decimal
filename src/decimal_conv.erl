@@ -20,12 +20,15 @@ to_binary({Int, E}) ->
     Size = byte_size(Bin),
     case Size-Shift of
         1 ->
-            <<Bin/binary, $e, (integer_to_binary(E))/binary>>;
+            <<Bin/binary, (e(E))/binary>>;
         _ ->
             S = (Shift+1),
             <<B:S/binary, R/binary>> = Bin,
-            <<B/binary, $., R/binary, $e, (integer_to_binary(E+Size-S))/binary>>
+            <<B/binary, $., R/binary, (e(E+Size-S))/binary>>
     end.
+
+e(0) -> <<>>;
+e(E) -> <<$e, (integer_to_binary(E))/binary>>.
 
 %% =============================================================================
 %%% Parser
@@ -46,7 +49,7 @@ parse_base(<<Char, Rest/binary>>, Sign, Base) ->
             parse_exp_sign(Rest, Sign*Base, 0)
     end;
 parse_base(<<>>, Sign, Base) ->
-    {Sign*Base, 0}.
+    {ok, {Sign*Base, 0}}.
 
 parse_fraction(<<Char, Rest/binary>>, Sign, Base, E) ->
     case Char of
@@ -60,6 +63,8 @@ parse_fraction(<<>>, Sign, Base, E) ->
 
 parse_exp_sign(<<$-, Rest/binary>>, Base, E) ->
     parse_exp(Rest, Base, E, -1, 0);
+parse_exp_sign(<<$+, Rest/binary>>, Base, E) ->
+    parse_exp(Rest, Base, E, 1, 0);
 parse_exp_sign(<<>>, _Base, _E) ->
     {error, bad_number};
 parse_exp_sign(Bin, Base, E) ->
@@ -69,4 +74,6 @@ parse_exp(<<Char, Rest/binary>>, Base, E, ExpSign, Exp) when
       Char >= $0, Char =< $9 ->
     parse_exp(Rest, Base, E, ExpSign, Exp*10+Char-$0);
 parse_exp(<<>>, Base, E, ExpSign, Exp) ->
-    {ok, {Base, ExpSign*Exp+E}}.
+    {ok, {Base, ExpSign*Exp+E}};
+parse_exp(_, _Base, _E, _ExpSign, _Exp) ->
+    {error, bad_number}.

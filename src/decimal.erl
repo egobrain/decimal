@@ -179,6 +179,4 @@ round_(Rounding, Int, E, Delta) when
 
 -spec pow_of_ten(non_neg_integer()) -> pos_integer().
 pow_of_ten(N) ->
-    pow_of_ten_(N, 1).
-pow_of_ten_(0, Acc) -> Acc;
-pow_of_ten_(N, Acc) -> pow_of_ten_(N-1, Acc*10).
+    binary_to_integer(<<$1, (binary:copy(<<$0>>, N))/binary>>).

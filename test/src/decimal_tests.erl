@@ -28,7 +28,7 @@ binary_test_() ->
         ],
     NegTests = [{<<$-, V/binary>>, {-B, E}} || {V, {B, E}} <- PosTests],
     [
-     {V, fun() -> {ok, R} = decimal:to_decimal(V, Opts) end}
+     {V, fun() -> R = decimal:to_decimal(V, Opts) end}
      || {V, R} <- PosTests ++ NegTests
     ].
 
@@ -94,7 +94,7 @@ rounding_test_() ->
      {<<V/binary, " ", (list_to_binary(atom_to_list(R)))/binary>>,
       fun() ->
           Opts = #{ precision => P, rounding => R},
-          {ok, D} = decimal:to_decimal(V, Opts),
+          D = decimal:to_decimal(V, Opts),
           Res = decimal:to_binary(D)
       end}
      || {V, P, R, Res} <- Tests
@@ -114,8 +114,8 @@ sum_test_() ->
     [
      {<<A/binary, $+, B/binary>>,
       fun() ->
-          {ok, A1} = decimal:to_decimal(A, Opts),
-          {ok, B1} = decimal:to_decimal(B, Opts),
+          A1 = decimal:to_decimal(A, Opts),
+          B1 = decimal:to_decimal(B, Opts),
           R = decimal:to_binary(decimal:add(A1, B1))
       end}
      || {A, B, R} <- Tests
@@ -135,8 +135,8 @@ mult_test_() ->
     [
      {<<A/binary, $*, B/binary>>,
       fun() ->
-          {ok, A1} = decimal:to_decimal(A, Opts),
-          {ok, B1} = decimal:to_decimal(B, Opts),
+          A1 = decimal:to_decimal(A, Opts),
+          B1 = decimal:to_decimal(B, Opts),
           R = decimal:to_binary(decimal:mult(A1, B1))
       end}
      || {A, B, R} <- Tests
@@ -157,8 +157,8 @@ divide_test_() ->
     [
      {<<A/binary, $/, B/binary>>,
       fun() ->
-          {ok, A1} = decimal:to_decimal(A, Opts),
-          {ok, B1} = decimal:to_decimal(B, Opts),
+          A1 = decimal:to_decimal(A, Opts),
+          B1 = decimal:to_decimal(B, Opts),
           R = decimal:to_binary(decimal:divide(A1, B1, Opts))
       end}
      || {A, B, R} <- Tests

@@ -5,7 +5,7 @@
          to_binary/1
         ]).
 
--spec from_binary(binary()) -> {ok, decimal:decimal()} | {error, not_number}.
+-spec from_binary(binary()) -> decimal:decimal().
 from_binary(Bin) ->
     parse_sign(Bin).
 
@@ -49,7 +49,7 @@ parse_base(<<Char, Rest/binary>>, Sign, Base) ->
             parse_exp_sign(Rest, Sign*Base, 0)
     end;
 parse_base(<<>>, Sign, Base) ->
-    {ok, {Sign*Base, 0}}.
+    {Sign*Base, 0}.
 
 parse_fraction(<<Char, Rest/binary>>, Sign, Base, E) ->
     case Char of
@@ -59,14 +59,14 @@ parse_fraction(<<Char, Rest/binary>>, Sign, Base, E) ->
             parse_exp_sign(Rest, Sign*Base, E)
     end;
 parse_fraction(<<>>, Sign, Base, E) ->
-    {ok, {Sign*Base, E}}.
+    {Sign*Base, E}.
 
 parse_exp_sign(<<$-, Rest/binary>>, Base, E) ->
     parse_exp(Rest, Base, E, -1, 0);
 parse_exp_sign(<<$+, Rest/binary>>, Base, E) ->
     parse_exp(Rest, Base, E, 1, 0);
 parse_exp_sign(<<>>, _Base, _E) ->
-    {error, bad_number};
+    error(badarg);
 parse_exp_sign(Bin, Base, E) ->
     parse_exp(Bin, Base, E, 1, 0).
 
@@ -74,6 +74,6 @@ parse_exp(<<Char, Rest/binary>>, Base, E, ExpSign, Exp) when
       Char >= $0, Char =< $9 ->
     parse_exp(Rest, Base, E, ExpSign, Exp*10+Char-$0);
 parse_exp(<<>>, Base, E, ExpSign, Exp) ->
-    {ok, {Base, ExpSign*Exp+E}};
+    {Base, ExpSign*Exp+E};
 parse_exp(_, _Base, _E, _ExpSign, _Exp) ->
-    {error, bad_number}.
+    error(badarg).

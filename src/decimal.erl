@@ -46,25 +46,19 @@
 
 %% = Converters ================================================================
 
--spec to_decimal(Value, Opts) -> {ok, decimal()} | {error, Reason} when
+-spec to_decimal(Value, Opts) -> decimal() when
       Value :: integer() | float() | binary() | list() | decimal(),
-      Opts :: opts(),
-      Reason :: any().
+      Opts :: opts().
 to_decimal({Int, E}=D, #{precision := Precision, rounding := Rounding}) when
       is_integer(Int), is_integer(E) ->
-    Rounded = round(Rounding, D, Precision),
-    {ok, Rounded};
+    round(Rounding, D, Precision);
 to_decimal(Int, #{precision := Precision, rounding := Rounding}) when
       is_integer(Int) ->
-    Rounded = round(Rounding, {Int, 0}, Precision),
-    {ok, Rounded};
+    round(Rounding, {Int, 0}, Precision);
 to_decimal(Binary, #{precision := Precision, rounding := Rounding}) when
       is_binary(Binary) ->
-    case decimal_conv:from_binary(Binary) of
-        {ok, Decimal} ->
-            {ok, round(Rounding, Decimal, Precision)};
-        {error, _Reason} = Err -> Err
-    end;
+    Decimal = decimal_conv:from_binary(Binary),
+    round(Rounding, Decimal, Precision);
 to_decimal(Float, Opts) when
       is_float(Float) ->
     Bin = float_to_binary(Float),

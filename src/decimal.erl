@@ -31,7 +31,7 @@
 -type decimal() :: {integer(), integer()}.
 -type rounding_algorithm() :: round_floor | round_cieling |
                               round_half_up | round_half_down |
-                              round.
+                              round_down | round.
 -type opts() :: #{
               precision => non_neg_integer(),
               rounding => rounding_algorithm()
@@ -155,6 +155,10 @@ round(Rounding, Decimal, Precision) ->
             Rounded
     end.
 
+round_(round_down, Int, E, Delta) ->
+    P = pow_of_ten(Delta),
+    Base = Int div P,
+    zero_exp_(Base, E+Delta);
 round_(Rounding, Int, E, Delta) when
       Rounding =:= round_cieling;
       Rounding =:= round_floor ->

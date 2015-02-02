@@ -23,6 +23,7 @@
 -export([
          abs/1,
          minus/1,
+         is_zero/1,
          reduce/1,
          round/3
         ]).
@@ -91,10 +92,11 @@ mult({Int1, E1}, {Int2, E2}) ->
 -spec divide(decimal(), decimal(), opts()) -> decimal().
 divide(A, B, #{ precision := Precision, rounding := Rounding }) ->
     {Int1, E1} = round(Rounding, A, Precision),
-    {Int2, E2} = round(Rounding, B, Precision),
-    case is_zero(B) of
+    B2 = round(Rounding, B, Precision),
+    case is_zero(B2) of
         true -> error(badarith);
         _ ->
+            {Int2, E2} = B2,
             Emin = min(E1, E2),
             Int =
                 (Int1*pow_of_ten(E1-Emin+Precision+1)) div
@@ -119,6 +121,7 @@ cmp(A, B, #{ precision := Precision, rounding := Rounding }) ->
 
 %% = Utils =====================================================================
 
+-spec is_zero(decimal()) -> boolean().
 is_zero({0, _}) -> true;
 is_zero(_) -> false.
 
@@ -149,6 +152,23 @@ round(Rounding, Decimal, Precision) ->
         _ ->
             Rounded
     end.
+
+round_(Rounding, Int, E, Delta) when
+      Rounding =:= ciel;
+      Rounding =:= floor ->
+    P = pow_of_ten(Delta),
+    Base0 = Int div P,
+    Diff = Int-Base0*P,
+    Base =
+        case Rounding of
+            floor when Diff < 0 ->
+                Base0 - 1;
+            ciel when Diff > 0 ->
+                Base0 + 1;
+            _ ->
+                Base0
+        end,
+    zero_exp_(Base, E+Delta);
 round_(Rounding, Int, E, Delta) ->
     P = pow_of_ten(Delta-1),
     Data = Int div P,
@@ -156,26 +176,25 @@ round_(Rounding, Int, E, Delta) ->
     LastDigit = erlang:abs(Data-(Base0*10)),
     Base =
         case Rounding of
-            ciel when LastDigit > 0, Base0 > 0 ->
+            half_up when LastDigit >= 5, Data > 0 ->
                 Base0 + 1;
-            floor when LastDigit > 0, Base0 < 0 ->
+            half_up when LastDigit > 5, Data < 0  ->
                 Base0 - 1;
-            half_up when LastDigit >= 5, Base0 > 0 ->
+            half_down when LastDigit > 5, Data > 0 ->
                 Base0 + 1;
-            half_up when LastDigit > 5, Base0 < 0  ->
+            half_down when LastDigit >= 5, Data < 0  ->
                 Base0 - 1;
-            half_down when LastDigit > 5, Base0 > 0 ->
+            round when LastDigit >= 5, Data > 0 ->
                 Base0 + 1;
-            half_down when LastDigit >= 5, Base0 < 0  ->
-                Base0 - 1;
-            round when LastDigit >= 5, Base0 > 0 ->
-                Base0 + 1;
-            round when LastDigit >= 5, Base0 < 0 ->
+            round when LastDigit >= 5, Data < 0 ->
                 Base0 - 1;
             _ ->
                 Base0
         end,
-    {Base, E+Delta}.
+    zero_exp_(Base, E+Delta).
+
+zero_exp_(0, _Exp) -> {0,0};
+zero_exp_(Base, Exp) -> {Base, Exp}.
 
 %% =============================================================================
 %%% Internal functions

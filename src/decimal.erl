@@ -29,7 +29,9 @@
         ]).
 
 -type decimal() :: {integer(), integer()}.
--type rounding_algorithm() :: floor | ciel | half_up | half_down | round.
+-type rounding_algorithm() :: round_floor | round_cieling |
+                              round_half_up | round_half_down |
+                              round.
 -type opts() :: #{
               precision => non_neg_integer(),
               rounding => rounding_algorithm()
@@ -154,16 +156,16 @@ round(Rounding, Decimal, Precision) ->
     end.
 
 round_(Rounding, Int, E, Delta) when
-      Rounding =:= ciel;
-      Rounding =:= floor ->
+      Rounding =:= round_cieling;
+      Rounding =:= round_floor ->
     P = pow_of_ten(Delta),
     Base0 = Int div P,
     Diff = Int-Base0*P,
     Base =
         case Rounding of
-            floor when Diff < 0 ->
+            round_floor when Diff < 0 ->
                 Base0 - 1;
-            ciel when Diff > 0 ->
+            round_cieling when Diff > 0 ->
                 Base0 + 1;
             _ ->
                 Base0
@@ -176,13 +178,13 @@ round_(Rounding, Int, E, Delta) ->
     LastDigit = erlang:abs(Data-(Base0*10)),
     Base =
         case Rounding of
-            half_up when LastDigit >= 5, Data > 0 ->
+            round_half_up when LastDigit >= 5, Data > 0 ->
                 Base0 + 1;
-            half_up when LastDigit > 5, Data < 0  ->
+            round_half_up when LastDigit > 5, Data < 0  ->
                 Base0 - 1;
-            half_down when LastDigit > 5, Data > 0 ->
+            round_half_down when LastDigit > 5, Data > 0 ->
                 Base0 + 1;
-            half_down when LastDigit >= 5, Data < 0  ->
+            round_half_down when LastDigit >= 5, Data < 0  ->
                 Base0 - 1;
             round when LastDigit >= 5, Data > 0 ->
                 Base0 + 1;

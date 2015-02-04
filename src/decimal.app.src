@@ -7,6 +7,5 @@
                   kernel,
                   stdlib
                  ]},
-  {mod, { decimal_app, []}},
   {env, []}
  ]}.

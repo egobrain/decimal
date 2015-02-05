@@ -22,6 +22,7 @@
         is_integer(element(2, D))).
 
 -define(to_decimal(X), decimal:to_decimal(X, ?d_context)).
+-define(to_decimal(B,E), decimal:to_decimal(B,E, ?d_context)).
 -define(to_binary(X), decimal:to_binary(?to_decimal(X))).
 -define(to_string(X), binary_to_list(?to_binary(X))).
 -define(to_float(X), binary_to_float(?to_binary(X))).

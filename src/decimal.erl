@@ -3,6 +3,7 @@
 %% Converters
 -export([
          to_decimal/2,
+         to_decimal/3,
          to_binary/1
         ]).
 
@@ -68,6 +69,13 @@ to_decimal(Float, Opts) when is_float(Float) ->
 to_decimal(List, Opts) when is_list(List) ->
     Bin = list_to_binary(List),
     to_decimal(Bin, Opts).
+
+-spec to_decimal(Base, Exp, Opts) -> decimal() when
+      Base :: integer(),
+      Exp :: integer(),
+      Opts :: opts().
+to_decimal(Base, Exp, #{precision := Precision, rounding := Rounding}) ->
+    round(Rounding, {Base, Exp}, Precision).
 
 -spec to_binary(decimal()) -> binary().
 to_binary(Decimal) ->

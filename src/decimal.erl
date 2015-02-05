@@ -30,6 +30,7 @@
         ]).
 
 -type decimal() :: {integer(), integer()}.
+-type old_decimal() :: {0|1, non_neg_integer(), integer()}.
 -type rounding_algorithm() :: round_floor | round_cieling |
                               round_half_up | round_half_down |
                               round_down | round.
@@ -51,7 +52,8 @@
 %% = Converters ================================================================
 
 -spec to_decimal(Value, Opts) -> decimal() when
-      Value :: integer() | float() | binary() | list() | decimal(),
+      Value :: integer() | float() | binary() | list() |
+               decimal() | old_decimal(),
       Opts :: opts().
 to_decimal({Int, E}=D, #{precision := Precision, rounding := Rounding}) when
       is_integer(Int), is_integer(E) ->
@@ -68,7 +70,11 @@ to_decimal(Float, Opts) when is_float(Float) ->
     to_decimal(Bin, Opts);
 to_decimal(List, Opts) when is_list(List) ->
     Bin = list_to_binary(List),
-    to_decimal(Bin, Opts).
+    to_decimal(Bin, Opts);
+%% Old decimal format support
+to_decimal({Sign, Base0, Exp}, #{precision := Precision, rounding := Rounding}) ->
+    Base = case Sign of 1 -> -Base0; 0 -> Base0 end,
+    round(Rounding, {Base, Exp}, Precision).
 
 -spec to_decimal(Base, Exp, Opts) -> decimal() when
       Base :: integer(),

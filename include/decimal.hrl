@@ -10,7 +10,7 @@
 -endif.
 
 -ifndef(d_rounding).
--define(d_rounding, round).
+-define(d_rounding, round_half_up).
 -endif.
 
 -define(d_context, #{ precision => ?d_precision, rounding => ?d_rounding}).

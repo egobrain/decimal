@@ -33,7 +33,7 @@
 -type old_decimal() :: {0|1, non_neg_integer(), integer()}.
 -type rounding_algorithm() :: round_floor | round_cieling |
                               round_half_up | round_half_down |
-                              round_down | round.
+                              round_down.
 -type opts() :: #{
               precision => non_neg_integer(),
               rounding => rounding_algorithm()
@@ -197,15 +197,11 @@ round_(Rounding, Int, E, Delta) ->
         case Rounding of
             round_half_up when LastDigit >= 5, Data > 0 ->
                 Base0 + 1;
-            round_half_up when LastDigit > 5, Data < 0  ->
+            round_half_up when LastDigit >= 5, Data < 0  ->
                 Base0 - 1;
             round_half_down when LastDigit > 5, Data > 0 ->
                 Base0 + 1;
-            round_half_down when LastDigit >= 5, Data < 0  ->
-                Base0 - 1;
-            round when LastDigit >= 5, Data > 0 ->
-                Base0 + 1;
-            round when LastDigit >= 5, Data < 0 ->
+            round_half_down when LastDigit > 5, Data < 0  ->
                 Base0 - 1;
             _ ->
                 Base0

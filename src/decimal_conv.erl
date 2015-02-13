@@ -10,6 +10,8 @@ from_binary(Bin) ->
     parse_sign(Bin).
 
 -spec to_binary(decimal:decimal()) -> binary().
+to_binary({Int, 0}) ->
+    <<(integer_to_binary(Int))/binary, ".0">>;
 to_binary({Int, E}) ->
     Sign =
         case Int < 0 of
@@ -18,12 +20,24 @@ to_binary({Int, E}) ->
         end,
     Bin = integer_to_binary(abs(Int)),
     Size = byte_size(Bin),
-    case Size of
-        1 ->
-            <<Sign/binary, Bin/binary, ".0", (e(E))/binary>>;
-        _ ->
+    case Size + E - 1 of
+        AE when E < 0 andalso AE > -6 ->
+            case AE < 0 of
+                true ->
+                    <<Sign/binary, "0.",
+                      (binary:copy(<<$0>>, -(AE+1)))/binary, Bin/binary>>;
+                false ->
+                    Shift = AE+1,
+                    <<B:Shift/binary, R/binary>> = Bin,
+                    <<Sign/binary, B/binary, $., R/binary>>
+            end;
+        AE when E >= 0 andalso AE < 6 ->
+            <<Sign/binary, Bin/binary, (binary:copy(<<$0>>, E))/binary, ".0">>;
+        AE when Size =:= 1->
+            <<Sign/binary, Bin/binary, ".0", (e(AE))/binary>>;
+        AE ->
             <<B:1/binary, R/binary>> = Bin,
-            <<Sign/binary, B/binary, $., R/binary, (e(E+Size-1))/binary>>
+            <<Sign/binary, B/binary, $., R/binary, (e(AE))/binary>>
     end.
 
 e(0) -> <<>>;

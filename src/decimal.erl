@@ -65,9 +65,10 @@ to_decimal(Binary, #{precision := Precision, rounding := Rounding}) when
       is_binary(Binary) ->
     Decimal = decimal_conv:from_binary(Binary),
     round(Rounding, Decimal, Precision);
-to_decimal(Float, Opts) when is_float(Float) ->
-    Bin = list_to_binary(io_lib_format:fwrite_g(Float)),
-    to_decimal(Bin, Opts);
+to_decimal(Float, #{precision := Precision, rounding := Rounding}) when
+      is_float(Float) ->
+    Decimal = decimal_conv:from_float(Float),
+    round(Rounding, Decimal, Precision);
 to_decimal(List, Opts) when is_list(List) ->
     Bin = list_to_binary(List),
     to_decimal(Bin, Opts);

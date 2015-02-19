@@ -69,9 +69,10 @@ to_decimal(Float, #{precision := Precision, rounding := Rounding}) when
       is_float(Float) ->
     Decimal = decimal_conv:from_float(Float),
     round(Rounding, Decimal, Precision);
-to_decimal(List, Opts) when is_list(List) ->
-    Bin = list_to_binary(List),
-    to_decimal(Bin, Opts);
+to_decimal(List, #{precision := Precision, rounding := Rounding}) when
+      is_list(List) ->
+    Decimal = decimal_conv:from_list(List),
+    round(Rounding, Decimal, Precision);
 %% Old decimal format support
 to_decimal({Sign, Base0, Exp}, #{precision := Precision, rounding := Rounding}) ->
     Base = case Sign of 1 -> -Base0; 0 -> Base0 end,

@@ -55,9 +55,9 @@
       Value :: integer() | float() | binary() | list() |
                decimal() | old_decimal(),
       Opts :: opts().
-to_decimal({Int, E}=D, #{precision := Precision, rounding := Rounding}) when
-      is_integer(Int), is_integer(E) ->
-    round(Rounding, D, Precision);
+to_decimal({Base, Exp}=Decimal, _Ots) when
+      is_integer(Base), is_integer(Exp) ->
+    Decimal;
 to_decimal(Int, #{precision := Precision, rounding := Rounding}) when
       is_integer(Int) ->
     round(Rounding, {Int, 0}, Precision);
@@ -74,16 +74,17 @@ to_decimal(List, #{precision := Precision, rounding := Rounding}) when
     Decimal = decimal_conv:from_list(List),
     round(Rounding, Decimal, Precision);
 %% Old decimal format support
-to_decimal({Sign, Base0, Exp}, #{precision := Precision, rounding := Rounding}) ->
+to_decimal({Sign, Base0, Exp}, _Opts) when
+      is_integer(Sign), is_integer(Base0), is_integer(Exp) ->
     Base = case Sign of 1 -> -Base0; 0 -> Base0 end,
-    round(Rounding, {Base, Exp}, Precision).
+    {Base, Exp}.
 
 -spec to_decimal(Base, Exp, Opts) -> decimal() when
       Base :: integer(),
       Exp :: integer(),
       Opts :: opts().
-to_decimal(Base, Exp, #{precision := Precision, rounding := Rounding}) ->
-    round(Rounding, {Base, Exp}, Precision).
+to_decimal(Base, Exp, _Opts) ->
+    {Base, Exp}.
 
 -spec to_binary(decimal()) -> binary().
 to_binary(Decimal) ->

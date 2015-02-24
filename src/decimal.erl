@@ -2,8 +2,8 @@
 
 %% Converters
 -export([
+         to_decimal/1,
          to_decimal/2,
-         to_decimal/3,
          to_binary/1
         ]).
 
@@ -51,39 +51,35 @@
 
 %% = Converters ================================================================
 
--spec to_decimal(Value, Opts) -> decimal() when
+-spec to_decimal(Value) -> decimal() when
       Value :: integer() | float() | binary() | list() |
-               decimal() | old_decimal(),
-      Opts :: opts().
-to_decimal({Base, Exp}=Decimal, _Ots) when
+               decimal() | old_decimal().
+to_decimal({Base, Exp}=Decimal) when
       is_integer(Base), is_integer(Exp) ->
     Decimal;
-to_decimal(Int, #{precision := Precision, rounding := Rounding}) when
+to_decimal(Int) when
       is_integer(Int) ->
-    round(Rounding, {Int, 0}, Precision);
-to_decimal(Binary, #{precision := Precision, rounding := Rounding}) when
+    {Int, 0};
+to_decimal(Binary) when
       is_binary(Binary) ->
-    Decimal = decimal_conv:from_binary(Binary),
-    round(Rounding, Decimal, Precision);
-to_decimal(Float, #{precision := Precision, rounding := Rounding}) when
+    decimal_conv:from_binary(Binary);
+to_decimal(Float) when
       is_float(Float) ->
-    Decimal = decimal_conv:from_float(Float),
-    round(Rounding, Decimal, Precision);
-to_decimal(List, #{precision := Precision, rounding := Rounding}) when
+    decimal_conv:from_float(Float);
+to_decimal(List) when
       is_list(List) ->
-    Decimal = decimal_conv:from_list(List),
-    round(Rounding, Decimal, Precision);
+    decimal_conv:from_list(List);
+
 %% Old decimal format support
-to_decimal({Sign, Base0, Exp}, _Opts) when
+to_decimal({Sign, Base0, Exp}) when
       is_integer(Sign), is_integer(Base0), is_integer(Exp) ->
     Base = case Sign of 1 -> -Base0; 0 -> Base0 end,
     {Base, Exp}.
 
--spec to_decimal(Base, Exp, Opts) -> decimal() when
+-spec to_decimal(Base, Exp) -> decimal() when
       Base :: integer(),
-      Exp :: integer(),
-      Opts :: opts().
-to_decimal(Base, Exp, _Opts) ->
+      Exp :: integer().
+to_decimal(Base, Exp) ->
     {Base, Exp}.
 
 -spec to_binary(decimal()) -> binary().

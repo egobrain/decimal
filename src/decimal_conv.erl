@@ -189,12 +189,7 @@ generate(R0, S, MPlus, MMinus, LowOk, HighOk) ->
     end.
 
 to_decimal(Place, S) ->
-    Exp =
-        if
-            Place < 0 -> Place - 1;
-            true -> Place - length(S)
-        end,
-    {list_to_integer(S), Exp}.
+    {list_to_integer(S), Place - length(S)}.
 
 int_ceil(X) when is_float(X) ->
     T = trunc(X),

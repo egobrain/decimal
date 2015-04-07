@@ -58,21 +58,18 @@
 to_decimal({Base, Exp}=Decimal, _Ots) when
       is_integer(Base), is_integer(Exp) ->
     Decimal;
-to_decimal(Int, #{precision := Precision, rounding := Rounding}) when
+to_decimal(Int, _Opts) when
       is_integer(Int) ->
-    round(Rounding, {Int, 0}, Precision);
-to_decimal(Binary, #{precision := Precision, rounding := Rounding}) when
+    {Int, 0};
+to_decimal(Binary, _Opts) when
       is_binary(Binary) ->
-    Decimal = decimal_conv:from_binary(Binary),
-    round(Rounding, Decimal, Precision);
-to_decimal(Float, #{precision := Precision, rounding := Rounding}) when
+    decimal_conv:from_binary(Binary);
+to_decimal(Float, _Opts) when
       is_float(Float) ->
-    Decimal = decimal_conv:from_float(Float),
-    round(Rounding, Decimal, Precision);
-to_decimal(List, #{precision := Precision, rounding := Rounding}) when
+    decimal_conv:from_float(Float);
+to_decimal(List, _Opts) when
       is_list(List) ->
-    Decimal = decimal_conv:from_list(List),
-    round(Rounding, Decimal, Precision);
+    decimal_conv:from_list(List);
 %% Old decimal format support
 to_decimal({Sign, Base0, Exp}, _Opts) when
       is_integer(Sign), is_integer(Base0), is_integer(Exp) ->
@@ -95,8 +92,8 @@ to_binary(Decimal) ->
 -spec add(decimal(), decimal()) -> decimal().
 add({Int1, E1}, {Int2, E2}) ->
     Emin = min(E1, E2),
-    {Int1 * pow_of_ten(E1 - Emin) +
-     Int2 * pow_of_ten(E2 - Emin),
+    {Int1 * decimal_utils:pow_of_ten(E1 - Emin) +
+     Int2 * decimal_utils:pow_of_ten(E2 - Emin),
      Emin}.
 
 -spec sub(decimal(), decimal()) -> decimal().
@@ -109,29 +106,28 @@ mult({Int1, E1}, {Int2, E2}) ->
 
 -spec divide(decimal(), decimal(), opts()) -> decimal().
 divide(A, B, #{ precision := Precision, rounding := Rounding }) ->
-    {Int1, E1} = round(Rounding, A, Precision),
-    B2 = round(Rounding, B, Precision),
-    case is_zero(B2) of
+    case is_zero(B) of
         true -> error(badarith);
         _ ->
-            {Int2, E2} = B2,
+            {Int1, E1} = A,
+            {Int2, E2} = B,
             Emin = min(E1, E2),
             Int =
-                (Int1*pow_of_ten(E1-Emin+Precision+1)) div
-                (Int2*pow_of_ten(E2-Emin)),
+                (Int1*decimal_utils:pow_of_ten(E1-Emin+Precision+1)) div
+                (Int2*decimal_utils:pow_of_ten(E2-Emin)),
             round(Rounding, {Int, -Precision-1}, Precision)
     end.
 
 %% = Compare ===================================================================
 
 -spec cmp(decimal(), decimal(), opts()) -> -1 | 0 | 1.
-cmp(A, B, #{ precision := Precision, rounding := Rounding }) ->
-    {Int1, E1} = round(Rounding, A, Precision),
-    {Int2, E2} = round(Rounding, B, Precision),
+cmp(A, B, _Opts) ->
+    {Int1, E1} = A,
+    {Int2, E2} = B,
 
     Emin = min(E1, E2),
-    B1 = Int1*pow_of_ten(E1-Emin),
-    B2 = Int2*pow_of_ten(E2-Emin),
+    B1 = Int1*decimal_utils:pow_of_ten(E1-Emin),
+    B2 = Int2*decimal_utils:pow_of_ten(E2-Emin),
     if B1 =:= B2 -> 0;
        B1 < B2 -> -1;
        B1 > B2 -> 1
@@ -153,6 +149,12 @@ abs({Int, E}) ->
 
 -spec reduce(decimal()) -> decimal().
 reduce({Int, E}) ->
+    %% case get(debug) of
+    %%     true ->
+    %%         io:format(" reduce(~p) in ~p\n", [{Int, E}, erlang:process_info(self(), current_stacktrace)]);
+    %%     _ ->
+    %%         ok
+    %% end,
     reduce_(Int, E).
 reduce_(0, _E) -> {0, 0};
 reduce_(Int, E) ->
@@ -163,22 +165,22 @@ reduce_(Int, E) ->
 
 -spec round(rounding_algorithm(), decimal(), non_neg_integer()) -> decimal().
 round(Rounding, Decimal, Precision) ->
-    {Int, E} = Rounded = reduce(Decimal),
+    {Int, E} = Decimal,
     case -Precision-E of
         Delta when Delta > 0 ->
             round_(Rounding, Int, E, Delta);
         _ ->
-            Rounded
+            Decimal
     end.
 
 round_(round_down, Int, E, Delta) ->
-    P = pow_of_ten(Delta),
+    P = decimal_utils:pow_of_ten(Delta),
     Base = Int div P,
     zero_exp_(Base, E+Delta);
 round_(Rounding, Int, E, Delta) when
       Rounding =:= round_cieling;
       Rounding =:= round_floor ->
-    P = pow_of_ten(Delta),
+    P = decimal_utils:pow_of_ten(Delta),
     Base0 = Int div P,
     Diff = Int-Base0*P,
     Base =
@@ -192,7 +194,7 @@ round_(Rounding, Int, E, Delta) when
         end,
     zero_exp_(Base, E+Delta);
 round_(Rounding, Int, E, Delta) ->
-    P = pow_of_ten(Delta-1),
+    P = decimal_utils:pow_of_ten(Delta-1),
     Data = Int div P,
     Base0 = Data div 10,
     LastDigit = erlang:abs(Data-(Base0*10)),
@@ -213,11 +215,3 @@ round_(Rounding, Int, E, Delta) ->
 
 zero_exp_(0, _Exp) -> {0,0};
 zero_exp_(Base, Exp) -> {Base, Exp}.
-
-%% =============================================================================
-%%% Internal functions
-%% =============================================================================
-
--spec pow_of_ten(non_neg_integer()) -> pos_integer().
-pow_of_ten(N) ->
-    binary_to_integer(<<$1, (binary:copy(<<$0>>, N))/binary>>).

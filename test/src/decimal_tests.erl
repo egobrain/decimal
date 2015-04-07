@@ -28,7 +28,7 @@ binary_test_() ->
         ],
     NegTests = [{<<$-, V/binary>>, {-B, E}} || {V, {B, E}} <- PosTests],
     [
-     {V, fun() -> R = decimal:to_decimal(V, Opts) end}
+     {V, fun() -> R = decimal:reduce(decimal:to_decimal(V, Opts)) end}
      || {V, R} <- PosTests ++ NegTests
     ].
 
@@ -115,7 +115,7 @@ rounding_test_() ->
       fun() ->
           Opts = #{ precision => P, rounding => R},
           D = decimal:to_decimal(V, Opts),
-          Res = decimal:to_binary(D)
+          Res = decimal:to_binary(decimal:round(R, D, P))
       end}
      || {V, P, R, Res} <- Tests
     ].
@@ -258,7 +258,7 @@ from_float_test_() ->
     [
      {iolist_to_binary(io_lib:format("~p", [F])),
       fun() ->
-          D = decimal:to_decimal(F, Opts)
+          D = decimal:reduce(decimal:to_decimal(F, Opts))
       end}
      || {D, F} <- Tests ++ NegTests
     ].

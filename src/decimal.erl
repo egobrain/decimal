@@ -125,6 +125,12 @@ divide(A, B, #{ precision := Precision, rounding := Rounding }) ->
 %% = Compare ===================================================================
 
 -spec cmp(decimal(), decimal(), opts()) -> -1 | 0 | 1.
+cmp({0, _}, {0, _}, _Opts) ->
+    0;
+cmp({Int1, _}, {Int2, _}, _Opts) when Int1 >= 0, Int2 =< 0 ->
+    1;
+cmp({Int1, _}, {Int2, _}, _Opts) when Int1 =< 0, Int2 >= 0 ->
+    -1;
 cmp(A, B, #{ precision := Precision, rounding := Rounding }) ->
     {Int1, E1} = round(Rounding, A, Precision),
     {Int2, E2} = round(Rounding, B, Precision),

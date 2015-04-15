@@ -284,5 +284,37 @@ error_badarg_test_() ->
       end} || D <- Tests
     ].
 
+cmp_test_() ->
+    Tests =
+        [
+         { {0,0}, {0,0},   0 },
+         { {1,0}, {1,0},   0 },
+         { {-1,0}, {-1,0}, 0 },
+         { {0,0}, {-1,0},  1 },
+         { {1,0}, {0,0},   1 },
+         { {-1,0}, {0,0}, -1 },
+         { {0,0}, {1,0},  -1 },
+
+         { {0, -100}, {0, 100}, 0},
+         { {10, 0}, {1, 1}, 0 },
+         { {123, -2}, {122, -2}, 1 },
+         { {-123, -2}, {-122, -2}, -1 }
+        ],
+    Opts = #{precision => 100, rounding => round_half_up},
+    [
+     {iolist_to_binary(
+          [
+           decimal:to_binary(A),
+           case R of
+               1 -> $>;
+               0 -> $=;
+               -1 -> $<
+           end,
+           decimal:to_binary(B)
+          ]),
+      fun() ->
+          R = decimal:cmp(A, B, Opts)
+      end} || {A, B, R} <- Tests
+     ].
 
 -endif.

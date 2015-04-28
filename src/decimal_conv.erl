@@ -65,14 +65,18 @@ parse_base([$.|Rest], Base) ->
 parse_base([Char|Rest], Base) when Char =:= $e; Char =:= $E ->
     parse_exp_sign(Rest, Base, 0);
 parse_base([], Base) ->
-    {list_to_integer(lists:reverse(Base)), 0}.
+    {list_to_integer(lists:reverse(Base)), 0};
+parse_base(_, _Base) ->
+    error(badarg).
 
 parse_fraction([Char|Rest], Base, E) when Char >= $0, Char =< $9 ->
     parse_fraction(Rest, [Char|Base], E-1);
 parse_fraction([Char|Rest], Base, E) when Char =:= $e; Char =:= $E ->
     parse_exp_sign(Rest, Base, E);
 parse_fraction([], Base, E) ->
-    {list_to_integer(lists:reverse(Base)), E}.
+    {list_to_integer(lists:reverse(Base)), E};
+parse_fraction(_, _Base, _E) ->
+    error(badarg).
 
 parse_exp_sign([Char|Rest], Base, E) when Char =:= $-; Char =:= $+ ->
     parse_exp(Rest, Base, E, [Char]);

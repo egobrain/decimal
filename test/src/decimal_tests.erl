@@ -263,6 +263,26 @@ from_float_test_() ->
      || {D, F} <- Tests ++ NegTests
     ].
 
+error_badarg_test_() ->
+    Tests =
+        [
+         <<"bad">>,
+         <<"-bad">>,
+         <<"-1bad">>,
+         <<"-1.bad">>,
+         <<"-1.0bad">>,
+         <<"-1.0ebad">>,
+         <<"-1.0e-bad">>,
+         <<"-1.0e-1bad">>,
+         <<"-1.0e+bad">>
+        ],
+    Opts = #{precision => 100, rounding => round_half_up},
+    [
+     {D,
+      fun() ->
+          ?assertException(error, badarg, decimal:to_decimal(D, Opts))
+      end} || D <- Tests
+    ].
 
 
 -endif.

@@ -5,17 +5,21 @@
          from_list/1,
          from_float/1,
 
-         to_binary/1
+         to_binary/2
         ]).
+
+-type binary_opts() :: #{ pretty => boolean() }.
+-export_type([binary_opts/0]).
 
 -spec from_binary(binary()) -> decimal:decimal().
 from_binary(Bin) ->
     from_list(binary_to_list(Bin)).
 
--spec to_binary(decimal:decimal()) -> binary().
-to_binary({Int, 0}) ->
+-spec to_binary(decimal:decimal(), Opts) -> binary() when
+      Opts :: binary_opts().
+to_binary({Int, 0}, _Opts) ->
     <<(integer_to_binary(Int))/binary, ".0">>;
-to_binary({Int, E}) ->
+to_binary({Int, E}, #{pretty := Pretty}) ->
     Sign =
         case Int < 0 of
             true -> <<$->>;
@@ -24,7 +28,7 @@ to_binary({Int, E}) ->
     Bin = integer_to_binary(abs(Int)),
     Size = byte_size(Bin),
     case Size + E - 1 of
-        AE when E < 0 andalso AE > -6 ->
+        AE when E < 0 andalso ((not Pretty) orelse (AE > -6)) ->
             case AE < 0 of
                 true ->
                     <<Sign/binary, "0.",
@@ -34,8 +38,8 @@ to_binary({Int, E}) ->
                     <<B:Shift/binary, R/binary>> = Bin,
                     <<Sign/binary, B/binary, $., R/binary>>
             end;
-        AE when E >= 0 andalso AE < 6 ->
-            <<Sign/binary, Bin/binary, (binary:copy(<<$0>>, E))/binary, ".0">>;
+        AE when E >= 0 andalso ((not Pretty) orelse (AE < 6)) ->
+            <<Sign/binary, Bin/binary,(binary:copy(<<$0>>, E))/binary, ".0">>;
         AE when Size =:= 1->
             <<Sign/binary, Bin/binary, ".0", (e(AE))/binary>>;
         AE ->

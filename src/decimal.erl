@@ -4,7 +4,8 @@
 -export([
          to_decimal/2,
          to_decimal/3,
-         to_binary/1
+         to_binary/1,
+         to_binary/2
         ]).
 
 %% Arith
@@ -88,7 +89,12 @@ to_decimal(Base, Exp, _Opts) ->
 
 -spec to_binary(decimal()) -> binary().
 to_binary(Decimal) ->
-    decimal_conv:to_binary(Decimal).
+    decimal_conv:to_binary(Decimal, #{pretty => true}).
+
+-spec to_binary(decimal(), Opts) -> binary() when
+      Opts :: decimal_conv:binary_opts().
+to_binary(Decimal, Opts) ->
+    decimal_conv:to_binary(Decimal, Opts).
 
 %% = Arith =====================================================================
 

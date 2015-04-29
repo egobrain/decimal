@@ -5,6 +5,10 @@
 %%% Common decimal functions
 %% =============================================================================
 
+-ifndef(d_pretty).
+-define(d_pretty, true).
+-endif.
+
 -ifndef(d_precision).
 -define(d_precision, 100).
 -endif.
@@ -23,7 +27,7 @@
 
 -define(to_decimal(X), decimal:to_decimal(X, ?d_context)).
 -define(to_decimal(B,E), decimal:to_decimal(B,E, ?d_context)).
--define(to_binary(X), decimal:to_binary(?to_decimal(X))).
+-define(to_binary(X), decimal:to_binary(?to_decimal(X),#{pretty=>?d_pretty})).
 -define(to_string(X), binary_to_list(?to_binary(X))).
 -define(to_float(X), binary_to_float(?to_binary(X))).
 

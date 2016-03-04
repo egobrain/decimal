@@ -27,8 +27,8 @@ to_binary({Int, E}, #{pretty := Pretty}) ->
         end,
     Bin = integer_to_binary(abs(Int)),
     Size = byte_size(Bin),
-    case Size + E - 1 of
-        AE when E < 0 andalso ((not Pretty) orelse (AE > -6)) ->
+    case Size - E - 1 of
+        AE when E > 0 andalso ((not Pretty) orelse (AE > -6)) ->
             case AE < 0 of
                 true ->
                     <<Sign/binary, "0.",
@@ -38,8 +38,8 @@ to_binary({Int, E}, #{pretty := Pretty}) ->
                     <<B:Shift/binary, R/binary>> = Bin,
                     <<Sign/binary, B/binary, $., R/binary>>
             end;
-        AE when E >= 0 andalso ((not Pretty) orelse (AE < 6)) ->
-            <<Sign/binary, Bin/binary,(binary:copy(<<$0>>, E))/binary, ".0">>;
+        AE when E =< 0 andalso ((not Pretty) orelse (AE < 6)) ->
+            <<Sign/binary, Bin/binary,(binary:copy(<<$0>>, -E))/binary, ".0">>;
         AE when Size =:= 1->
             <<Sign/binary, Bin/binary, ".0", (e(AE))/binary>>;
         AE ->
@@ -74,7 +74,7 @@ parse_base(_, _Base) ->
     error(badarg).
 
 parse_fraction([Char|Rest], Base, E) when Char >= $0, Char =< $9 ->
-    parse_fraction(Rest, [Char|Base], E-1);
+    parse_fraction(Rest, [Char|Base], E+1);
 parse_fraction([Char|Rest], Base, E) when Char =:= $e; Char =:= $E ->
     parse_exp_sign(Rest, Base, E);
 parse_fraction([], Base, E) ->
@@ -93,7 +93,7 @@ parse_exp([Char|Rest], Base, E, Exp) when Char >= $0, Char =< $9 ->
     parse_exp(Rest, Base, E, [Char|Exp]);
 parse_exp([], Base, E, Exp) ->
     {list_to_integer(lists:reverse(Base)),
-     list_to_integer(lists:reverse(Exp))+E};
+    -list_to_integer(lists:reverse(Exp))+E};
 parse_exp(_, _Base, _E, _Exp) ->
     error(badarg).
 
@@ -106,10 +106,10 @@ from_float(0.0) ->
 from_float(Float) when is_float(Float) ->
     {Frac, Exp} = mantissa_exponent(Float),
     {Place, Digits} = from_float_(Float, Exp, Frac),
-    Decimal = {B,E} = to_decimal(Place, [$0 + D || D <- Digits]),
+    {B, E} = to_decimal(Place, [$0 + D || D <- Digits]),
     case Float < 0.0 of
-        true -> {-B, E};
-        false -> Decimal
+        true -> {-B, -E};
+        false -> {B, -E}
     end.
 
 -define(BIG_POW, (1 bsl 52)).

@@ -78,7 +78,7 @@ to_decimal(List, #{precision := Precision, rounding := Rounding}) when
 to_decimal({Sign, Base0, Exp}, _Opts) when
       is_integer(Sign), is_integer(Base0), is_integer(Exp) ->
     Base = case Sign of 1 -> -Base0; 0 -> Base0 end,
-    {Base, Exp}.
+    {Base, -Exp}.
 
 -spec to_decimal(Base, Exp, Opts) -> decimal() when
       Base :: integer(),
@@ -100,10 +100,10 @@ to_binary(Decimal, Opts) ->
 
 -spec add(decimal(), decimal()) -> decimal().
 add({Int1, E1}, {Int2, E2}) ->
-    Emin = min(E1, E2),
-    {Int1 * pow_of_ten(E1 - Emin) +
-     Int2 * pow_of_ten(E2 - Emin),
-     Emin}.
+    Emax = max(E1, E2),
+    {Int1 * pow_of_ten(Emax - E1) +
+     Int2 * pow_of_ten(Emax - E2),
+     Emax}.
 
 -spec sub(decimal(), decimal()) -> decimal().
 sub(A, B) ->
@@ -121,11 +121,11 @@ divide(A, B, #{ precision := Precision, rounding := Rounding }) ->
         true -> error(badarith);
         _ ->
             {Int2, E2} = B2,
-            Emin = min(E1, E2),
+            Emax = max(E1, E2),
             Int =
-                (Int1*pow_of_ten(E1-Emin+Precision+1)) div
-                (Int2*pow_of_ten(E2-Emin)),
-            round(Rounding, {Int, -Precision-1}, Precision)
+                (Int1*pow_of_ten(Emax-E1+Precision+1)) div
+                (Int2*pow_of_ten(Emax-E2)),
+            round(Rounding, {Int, Precision+1}, Precision)
     end.
 
 %% = Compare ===================================================================
@@ -141,9 +141,9 @@ cmp(A, B, #{ precision := Precision, rounding := Rounding }) ->
     {Int1, E1} = round(Rounding, A, Precision),
     {Int2, E2} = round(Rounding, B, Precision),
 
-    Emin = min(E1, E2),
-    B1 = Int1*pow_of_ten(E1-Emin),
-    B2 = Int2*pow_of_ten(E2-Emin),
+    Emax = max(E1, E2),
+    B1 = Int1*pow_of_ten(Emax-E1),
+    B2 = Int2*pow_of_ten(Emax-E2),
     if B1 =:= B2 -> 0;
        B1 < B2 -> -1;
        B1 > B2 -> 1
@@ -169,14 +169,14 @@ reduce({Int, E}) ->
 reduce_(0, _E) -> {0, 0};
 reduce_(Int, E) ->
     case Int rem 10 of
-        0 -> reduce_(Int div 10, E+1);
+        0 -> reduce_(Int div 10, E-1);
         _ -> {Int, E}
     end.
 
 -spec round(rounding_algorithm(), decimal(), non_neg_integer()) -> decimal().
 round(Rounding, Decimal, Precision) ->
     {Int, E} = Rounded = reduce(Decimal),
-    case -Precision-E of
+    case -Precision+E of
         Delta when Delta > 0 ->
             round_(Rounding, Int, E, Delta);
         _ ->
@@ -186,7 +186,7 @@ round(Rounding, Decimal, Precision) ->
 round_(round_down, Int, E, Delta) ->
     P = pow_of_ten(Delta),
     Base = Int div P,
-    zero_exp_(Base, E+Delta);
+    zero_exp_(Base, E-Delta);
 round_(Rounding, Int, E, Delta) when
       Rounding =:= round_cieling;
       Rounding =:= round_floor ->
@@ -202,7 +202,7 @@ round_(Rounding, Int, E, Delta) when
             _ ->
                 Base0
         end,
-    zero_exp_(Base, E+Delta);
+    zero_exp_(Base, E-Delta);
 round_(Rounding, Int, E, Delta) ->
     P = pow_of_ten(Delta-1),
     Data = Int div P,
@@ -221,7 +221,7 @@ round_(Rounding, Int, E, Delta) ->
             _ ->
                 Base0
         end,
-    zero_exp_(Base, E+Delta).
+    zero_exp_(Base, E-Delta).
 
 zero_exp_(0, _Exp) -> {0,0};
 zero_exp_(Base, Exp) -> {Base, Exp}.

@@ -44,7 +44,9 @@
 -define(is_signed(X),case ?sign(X) of -1 -> true; _ -> false end).
 -define(cmp(X,Y),decimal:cmp(?to_decimal(X),?to_decimal(Y),?d_context)).
 -define(le(X,Y),(?cmp(X,Y) =< 0)).
+-define(lt(X,Y),(?cmp(X,Y) < 0)).
 -define(ge(X,Y),(?cmp(X,Y) >= 0)).
+-define(gt(X,Y),(?cmp(X,Y) > 0)).
 -define(max(X,Y),case ?cmp(X,Y) of 1->X;_->Y end).
 -define(min(X,Y),case ?cmp(X,Y) of -1->X;_->Y end).
 -define(reduce(X),decimal:reduce(?to_decimal(X))).

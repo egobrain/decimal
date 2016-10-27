@@ -176,14 +176,14 @@ reduce_(Int, E) ->
     end.
 
 -spec round(rounding_algorithm(), decimal(), non_neg_integer()) -> decimal().
-round(Rounding, Decimal, Precision) ->
-    {Int, E} = Rounded = reduce(Decimal),
-    case -Precision-E of
-        Delta when Delta > 0 ->
-            round_(Rounding, Int, E, Delta);
-        _ ->
-            Rounded
-    end.
+round(Rounding, {Int, E}=Decimal, Precision) ->
+    reduce(
+        case -Precision-E of
+            Delta when Delta > 0 ->
+                round_(Rounding, Int, E, Delta);
+            _ ->
+                Decimal
+        end).
 
 round_(round_down, Int, E, Delta) ->
     P = pow_of_ten(Delta),

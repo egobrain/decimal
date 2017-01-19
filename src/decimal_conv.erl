@@ -8,6 +8,8 @@
          to_binary/2
         ]).
 
+-compile(inline).
+
 -type binary_opts() :: #{ pretty => boolean() }.
 -export_type([binary_opts/0]).
 

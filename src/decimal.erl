@@ -30,6 +30,8 @@
          round/3
         ]).
 
+-compile(inline).
+
 -type decimal() :: {integer(), integer()}.
 -type old_decimal() :: {0|1, non_neg_integer(), integer()}.
 -type rounding_algorithm() :: round_floor | round_cieling |
@@ -174,14 +176,14 @@ reduce_(Int, E) ->
     end.
 
 -spec round(rounding_algorithm(), decimal(), non_neg_integer()) -> decimal().
-round(Rounding, Decimal, Precision) ->
-    {Int, E} = Rounded = reduce(Decimal),
-    case -Precision+E of
-        Delta when Delta > 0 ->
-            round_(Rounding, Int, E, Delta);
-        _ ->
-            Rounded
-    end.
+round(Rounding, {Int, E}=Decimal, Precision) ->
+    reduce(
+        case -Precision+E of
+            Delta when Delta > 0 ->
+                round_(Rounding, Int, E, Delta);
+            _ ->
+                Decimal
+        end).
 
 round_(round_down, Int, E, Delta) ->
     P = pow_of_ten(Delta),
@@ -232,4 +234,14 @@ zero_exp_(Base, Exp) -> {Base, Exp}.
 
 -spec pow_of_ten(non_neg_integer()) -> pos_integer().
 pow_of_ten(N) ->
-    binary_to_integer(<<$1, (binary:copy(<<$0>>, N))/binary>>).
+    int_pow(10, N).
+
+int_pow(X, 0) when is_integer(X) ->
+    1;
+int_pow(X, N) when is_integer(X), is_integer(N), N > 0 ->
+    int_pow(X, N, 1).
+
+int_pow(X, N, R) when N < 2 ->
+    R * X;
+int_pow(X, N, R) ->
+    int_pow(X * X, N bsr 1, case N band 1 of 1 -> R * X; 0 -> R end).

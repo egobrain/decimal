@@ -3,6 +3,17 @@
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 
+list_test_() ->
+    Tests =
+        [
+         {"1", {1, 0}},
+         {"-1", {-1, 0}}
+        ],
+    [
+     {V, fun() -> R = decimal_conv:from_list(V) end}
+     || {V, R} <- Tests
+    ].
+
 binary_test_() ->
     Opts = #{ precision => 5, rounding => round_half_up },
     PosTests =

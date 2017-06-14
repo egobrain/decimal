@@ -3,6 +3,18 @@
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 
+list_test_() ->
+    Opts = #{ precision => 5, rounding => round_half_up },
+    Tests =
+        [
+         {"1", {1, 0}},
+         {"-1", {-1, 0}}
+        ],
+    [
+     {V, fun() -> R = decimal:to_decimal(V, Opts) end}
+     || {V, R} <- Tests
+    ].
+
 binary_test_() ->
     Opts = #{ precision => 5, rounding => round_half_up },
     PosTests =
@@ -141,6 +153,28 @@ sum_test_() ->
      || {A, B, R} <- Tests
     ].
 
+sub_test_() ->
+    Tests =
+        [
+         {<<"1">>, <<"2">>, <<"-1.0">>},
+         {<<"1">>, <<"-2">>, <<"3.0">>},
+         {<<"1">>, <<"0.2">>, <<"0.8">>},
+         {<<"1e3">>, <<"1e-3">>, <<"999.999">>},
+         {<<"123.456">>, <<"7e-4">>, <<"123.4553">>},
+         {<<"1">>, <<"-1">>, <<"2.0">>}
+        ],
+    Opts = #{ precision => 5, rounding => round_floor},
+    [
+     {<<A/binary, $+, B/binary>>,
+      fun() ->
+          A1 = decimal:to_decimal(A, Opts),
+          B1 = decimal:to_decimal(B, Opts),
+          R = decimal:to_binary(decimal:sub(A1, B1))
+      end}
+     || {A, B, R} <- Tests
+    ].
+
+
 mult_test_() ->
     Tests =
         [
@@ -171,7 +205,8 @@ divide_test_() ->
          {<<"1e3">>, <<"1e-3">>, <<"1.0e6">>},
          {<<"3e-1">>, <<"3e-1">>, <<"1.0">>},
          {<<"1">>, <<"3">>, <<"0.", (repeate($3, 100))/binary>>},
-         {<<"2">>, <<"3">>, <<"0.", (repeate($6, 99))/binary, "7">>}
+         {<<"2">>, <<"3">>, <<"0.", (repeate($6, 99))/binary, "7">>},
+         {<<"1">>, <<"0">>, {error, badarith}}
         ],
     Opts = #{ precision => 100, rounding => round_half_up},
     [
@@ -179,13 +214,21 @@ divide_test_() ->
       fun() ->
           A1 = decimal:to_decimal(A, Opts),
           B1 = decimal:to_decimal(B, Opts),
-          R = decimal:to_binary(decimal:divide(A1, B1, Opts))
+          R = try decimal:to_binary(decimal:divide(A1, B1, Opts)) catch Err:Res -> {Err,Res} end
       end}
      || {A, B, R} <- Tests
     ].
 
 repeate(Ch, N) ->
     << <<Ch>> || _ <- lists:seq(1, N)>>.
+
+minus_test() ->
+    ?assertEqual({-1, 0}, decimal:minus({1,0})),
+    ?assertEqual({1, 0}, decimal:minus({-1,0})).
+
+abs_test() ->
+    ?assertEqual({1, 0}, decimal:abs({1,0})),
+    ?assertEqual({1, 0}, decimal:abs({-1,0})).
 
 pretty_print_test_() ->
     Tests =
@@ -235,6 +278,7 @@ from_float_test_() ->
          {{1, -2}, 100},
          {{1, -1}, 10},
          {{1,  0}, 1.0},
+
          {{1,  1}, 0.1},
          {{1,  2}, 0.01},
          {{1,  3}, 0.001},
@@ -362,6 +406,22 @@ to_binary_test_() ->
       fun() ->
           R = decimal:to_binary(D, #{pretty => P})
       end} || {P, D, R} <- Tests
+    ].
+
+to_decimal_test_() ->
+    Opts = #{ precision => 5, rounding => round_half_up },
+    Tests =
+        [
+         {<<"from decimal">>, {1,0}, {1, 0}},
+         {<<"from deprecated decimal">>, {1,1,0}, {-1, 0}}
+        ],
+    [
+     {N, fun() -> R = decimal:to_decimal(V, Opts) end}
+     || {N, V, R} <- Tests
+    ] ++ [
+       {<<"constructor">>, fun() ->
+           ?assertEqual({1,3}, decimal:to_decimal(1,3,Opts))
+       end}
     ].
 
 -endif.

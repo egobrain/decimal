@@ -15,7 +15,7 @@
 
 -spec from_binary(binary()) -> decimal:decimal().
 from_binary(Bin) ->
-    from_list(binary_to_list(Bin)).
+    parse_base(Bin, <<>>).
 
 -spec to_binary(decimal:decimal(), Opts) -> binary() when
       Opts :: binary_opts().
@@ -53,50 +53,43 @@ e(0) -> <<>>;
 e(E) -> <<$e, (integer_to_binary(E))/binary>>.
 
 %% =============================================================================
-%%% List parser
+%%% Binary string parser
 %% =============================================================================
 
-from_list(List) ->
-    parse_sign(List).
+from_list(List) when is_list(List) ->
+    from_binary(list_to_binary(List)).
 
-parse_sign([Char = $-|Rest]) ->
-    parse_base(Rest, [Char]);
-parse_sign(List) ->
-    parse_base(List, []).
-
-parse_base([Char|Rest], Base) when Char >= $0, Char =< $9 ->
-    parse_base(Rest, [Char|Base]);
-parse_base([$.|Rest], Base) ->
-    parse_fraction(Rest, Base, 0);
-parse_base([Char|Rest], Base) when Char =:= $e; Char =:= $E ->
-    parse_exp_sign(Rest, Base, 0);
-parse_base([], Base) ->
-    {list_to_integer(lists:reverse(Base)), 0};
-parse_base(_, _Base) ->
+parse_base(<<$-, Rest/binary>>, <<>>) ->
+    parse_base(Rest, <<$->>);
+parse_base(<<$., Rest/binary>>, Acc) ->
+    parse_fraction(Rest, Acc, 0);
+parse_base(<<X, Rest/binary>>, Acc) when X >= $0, X =< $9 ->
+    parse_base(Rest, <<Acc/binary, X>>);
+parse_base(<<X, Rest/binary>>, Acc) when X =:= $E; X =:= $e ->
+    parse_exp(Rest, Acc, 0, <<>>);
+parse_base(<<>>, Acc) ->
+    {binary_to_integer(Acc),0};
+parse_base(_,_) ->
     error(badarg).
 
-parse_fraction([Char|Rest], Base, E) when Char >= $0, Char =< $9 ->
-    parse_fraction(Rest, [Char|Base], E+1);
-parse_fraction([Char|Rest], Base, E) when Char =:= $e; Char =:= $E ->
-    parse_exp_sign(Rest, Base, E);
-parse_fraction([], Base, E) ->
-    {list_to_integer(lists:reverse(Base)), E};
-parse_fraction(_, _Base, _E) ->
+parse_fraction(<<X, Rest/binary>>, Acc, E) when X >= $0, X =< $9 ->
+    parse_fraction(Rest, <<Acc/binary, X >>, E-1);
+parse_fraction(<<X, Rest/binary>>, Acc, E) when X =:= $E; X =:= $e ->
+    parse_exp(Rest, Acc, E, <<>>);
+parse_fraction(<<>>, Acc, E) ->
+    {binary_to_integer(Acc), -E};
+parse_fraction(_,_,_) ->
     error(badarg).
 
-parse_exp_sign([Char|Rest], Base, E) when Char =:= $-; Char =:= $+ ->
-    parse_exp(Rest, Base, E, [Char]);
-parse_exp_sign([], _Base, _E) ->
-    error(badarg);
-parse_exp_sign(List, Base, E) ->
-    parse_exp(List, Base, E, []).
-
-parse_exp([Char|Rest], Base, E, Exp) when Char >= $0, Char =< $9 ->
-    parse_exp(Rest, Base, E, [Char|Exp]);
-parse_exp([], Base, E, Exp) ->
-    {list_to_integer(lists:reverse(Base)),
-    -list_to_integer(lists:reverse(Exp))+E};
-parse_exp(_, _Base, _E, _Exp) ->
+parse_exp(<<$-, Rest/binary>>, Base, E, <<>>) ->
+    parse_exp(Rest, Base, E, <<$->>);
+parse_exp(<<$+, Rest/binary>>, Base, E, <<>>) ->
+    parse_exp(Rest, Base, E, <<>>);
+parse_exp(<<X, Rest/binary>>, Base, E, Acc) when X >= $0, X =< $9 ->
+    parse_exp(Rest, Base, E, <<Acc/binary, X>>);
+parse_exp(<<>>, Base, E, Acc) ->
+    {binary_to_integer(Base), -(E+binary_to_integer(Acc))};
+parse_exp(_,_,_,_) ->
     error(badarg).
 
 %% =============================================================================

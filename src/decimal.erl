@@ -34,7 +34,7 @@
 
 -type decimal() :: {integer(), integer()}.
 -type old_decimal() :: {0|1, non_neg_integer(), integer()}.
--type rounding_algorithm() :: round_floor | round_cieling |
+-type rounding_algorithm() :: round_floor | round_ceiling |
                               round_half_up | round_half_down |
                               round_down.
 -type opts() :: #{
@@ -190,7 +190,7 @@ round_(round_down, Int, E, Delta) ->
     Base = Int div P,
     zero_exp_(Base, E+Delta);
 round_(Rounding, Int, E, Delta) when
-      Rounding =:= round_cieling;
+      Rounding =:= round_ceiling;
       Rounding =:= round_floor ->
     P = pow_of_ten(Delta),
     Base0 = Int div P,
@@ -199,7 +199,7 @@ round_(Rounding, Int, E, Delta) when
         case Rounding of
             round_floor when Diff < 0 ->
                 Base0 - 1;
-            round_cieling when Diff > 0 ->
+            round_ceiling when Diff > 0 ->
                 Base0 + 1;
             _ ->
                 Base0

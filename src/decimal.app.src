@@ -1,11 +1,18 @@
-{application, decimal,
- [
-  {description, "Decimal library"},
-  {vsn, git},
-  {registered, []},
-  {applications, [
-                  kernel,
-                  stdlib
-                 ]},
-  {env, []}
- ]}.
+%% -*- erlang
+{application, decimal, [
+    {description, "Library for fast decimal arithmetics"},
+    {vsn, git},
+    {registered, []},
+    {applications, [
+        kernel,
+        stdlib
+    ]},
+    {env, []},
+
+    {pkg_name, "erlang_decimal"},
+    {maintainers, ["Yakov Kozlov"]},
+    {licenses, ["MIT"]},
+    {links, [
+        {"Github", "https://github.com/egobrain/decimal"}
+    ]}
+]}.

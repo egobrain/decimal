@@ -143,6 +143,12 @@ cmp({Int1, _}, {Int2, _}, _Opts) when Int1 >= 0, Int2 =< 0 ->
     1;
 cmp({Int1, _}, {Int2, _}, _Opts) when Int1 =< 0, Int2 >= 0 ->
     -1;
+cmp({Int, E}, {Int, E}, _Opts) ->
+    0;
+cmp({Int1, E}, {Int2, E}, _Opts) when Int1 > Int2 ->
+    1;
+cmp({Int1, E}, {Int2, E}, _Opts) when Int1 < Int2 ->
+    -1;
 cmp(A, B, #{ precision := Precision, rounding := Rounding }) ->
     {Int1, E1} = round(Rounding, A, Precision),
     {Int2, E2} = round(Rounding, B, Precision),

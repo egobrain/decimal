@@ -116,6 +116,10 @@ mult({Int1, E1}, {Int2, E2}) ->
     {Int1*Int2, E1+E2}.
 
 -spec divide(decimal(), decimal(), opts()) -> decimal().
+divide({M, E}, {2, 0}, #{ precision := Precision, rounding := Rounding }) when (M band 1) == 0 ->
+    round(Rounding, {M bsr 1, E}, Precision);
+divide({M, E}, {2, 0}, #{ precision := Precision, rounding := Rounding }) ->
+    round(Rounding, {M * 5, E-1}, Precision);
 divide(A, B, #{ precision := Precision, rounding := Rounding }) ->
     {Int1, E1} = round(Rounding, A, Precision),
     B2 = round(Rounding, B, Precision),
@@ -138,6 +142,12 @@ cmp({0, _}, {0, _}, _Opts) ->
 cmp({Int1, _}, {Int2, _}, _Opts) when Int1 >= 0, Int2 =< 0 ->
     1;
 cmp({Int1, _}, {Int2, _}, _Opts) when Int1 =< 0, Int2 >= 0 ->
+    -1;
+cmp({Int, E}, {Int, E}, _Opts) ->
+    0;
+cmp({Int1, E}, {Int2, E}, _Opts) when Int1 > Int2 ->
+    1;
+cmp({Int1, E}, {Int2, E}, _Opts) when Int1 < Int2 ->
     -1;
 cmp(A, B, #{ precision := Precision, rounding := Rounding }) ->
     {Int1, E1} = round(Rounding, A, Precision),

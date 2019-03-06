@@ -427,7 +427,11 @@ to_decimal_test_() ->
      || {N, V, R} <- Tests
     ] ++ [
        {<<"constructor">>, fun() ->
-           ?assertEqual({1,3}, decimal:to_decimal(1,3,Opts))
+           ?assertEqual({1,3}, decimal:to_decimal(1,3,Opts)),
+           ?assertEqual({1,0}, decimal:to_decimal(<<"+1">>,Opts)),
+           ?assertEqual({1,3}, decimal:to_decimal(<<"+1000">>,Opts)),
+           ?assertEqual({0,0}, decimal:to_decimal(<<"+0">>,Opts)),
+           ?assertEqual({5,-1}, decimal:to_decimal(<<"+0.5">>,Opts))
        end}
     ].
 

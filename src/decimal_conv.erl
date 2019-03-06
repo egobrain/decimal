@@ -61,6 +61,8 @@ from_list(List) when is_list(List) ->
 
 parse_base(<<$-, Rest/binary>>, <<>>) ->
     parse_base(Rest, <<$->>);
+parse_base(<<$+, Rest/binary>>, <<>>) ->
+    parse_base(Rest, <<>>);
 parse_base(<<$., Rest/binary>>, Acc) ->
     parse_fraction(Rest, Acc, 0);
 parse_base(<<X, Rest/binary>>, Acc) when X >= $0, X =< $9 ->

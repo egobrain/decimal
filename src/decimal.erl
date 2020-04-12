@@ -18,6 +18,7 @@
 
 %% Compare
 -export([
+         cmp/2,
          cmp/3
         ]).
 
@@ -58,7 +59,7 @@
       Value :: integer() | float() | binary() | list() |
                decimal() | old_decimal(),
       Opts :: opts().
-to_decimal({Base, Exp}=Decimal, _Ots) when
+to_decimal({Base, Exp}=Decimal, _Opts) when
       is_integer(Base), is_integer(Exp) ->
     Decimal;
 to_decimal(Int, #{precision := Precision, rounding := Rounding}) when
@@ -120,19 +121,10 @@ divide({M, E}, {2, 0}, #{ precision := Precision, rounding := Rounding }) when (
     round(Rounding, {M bsr 1, E}, Precision);
 divide({M, E}, {2, 0}, #{ precision := Precision, rounding := Rounding }) ->
     round(Rounding, {M * 5, E-1}, Precision);
-divide(A, B, #{ precision := Precision, rounding := Rounding }) ->
-    {Int1, E1} = round(Rounding, A, Precision),
-    B2 = round(Rounding, B, Precision),
-    case is_zero(B2) of
-        true -> error(badarith);
-        _ ->
-            {Int2, E2} = B2,
-            Emin = min(E1, E2),
-            Int =
-                (Int1*pow_of_ten(E1-Emin+Precision+1)) div
-                (Int2*pow_of_ten(E2-Emin)),
-            round(Rounding, {Int, -Precision-1}, Precision)
-    end.
+divide({BaseA, ExpA},{BaseB, ExpB}, #{ precision := Precision0, rounding := Rounding }) ->
+    Precision = Precision0 + 1,
+    BaseRes = BaseA * pow_of_ten(Precision) div BaseB,
+    round(Rounding, {BaseRes, ExpA - ExpB - Precision}, Precision0).
 
 %% = Compare ===================================================================
 
@@ -152,13 +144,34 @@ cmp({Int1, E}, {Int2, E}, _Opts) when Int1 < Int2 ->
 cmp(A, B, #{ precision := Precision, rounding := Rounding }) ->
     {Int1, E1} = round(Rounding, A, Precision),
     {Int2, E2} = round(Rounding, B, Precision),
-
     Emin = min(E1, E2),
     B1 = Int1*pow_of_ten(E1-Emin),
     B2 = Int2*pow_of_ten(E2-Emin),
-    if B1 =:= B2 -> 0;
-       B1 < B2 -> -1;
-       B1 > B2 -> 1
+    if B1 < B2 -> -1;
+       B1 > B2 -> 1;
+       true -> 0
+    end.
+
+%% Fast compare without rounding
+cmp({0, _}, {0, _}) ->
+    0;
+cmp({Int1, _}, {Int2, _}) when Int1 >= 0, Int2 =< 0 ->
+    1;
+cmp({Int1, _}, {Int2, _}) when Int1 =< 0, Int2 >= 0 ->
+    -1;
+cmp({Int, E}, {Int, E}) ->
+    0;
+cmp({Int1, E}, {Int2, E}) when Int1 > Int2 ->
+    1;
+cmp({Int1, E}, {Int2, E}) when Int1 < Int2 ->
+    -1;
+cmp({Int1, E1}, {Int2, E2}) ->
+    Emin = min(E1, E2),
+    B1 = Int1*pow_of_ten(E1-Emin),
+    B2 = Int2*pow_of_ten(E2-Emin),
+    if B1 < B2 -> -1;
+       B1 > B2 -> 1;
+       true -> 0
     end.
 
 %% = Utils =====================================================================
@@ -243,13 +256,13 @@ zero_exp_(Base, Exp) -> {Base, Exp}.
 %% =============================================================================
 
 -spec pow_of_ten(non_neg_integer()) -> pos_integer().
-pow_of_ten(N) ->
-    int_pow(10, N).
 
-int_pow(X, 0) when is_integer(X) ->
-    1;
-int_pow(X, N) when is_integer(X), is_integer(N), N > 0 ->
-    int_pow(X, N, 1).
+pow_of_ten(101) -> %speedup for default precision settings
+    100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000;
+pow_of_ten(N) ->
+    if N > 0 -> int_pow(10, N, 1);
+       true  -> 1
+    end.
 
 int_pow(X, N, R) when N < 2 ->
     R * X;

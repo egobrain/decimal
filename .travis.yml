@@ -8,4 +8,4 @@ otp_release:
   - 19.1
   - 18.2.1
 script:
-  - ./rebar3 do xref,eunit,dialyzer,coveralls send
+  - ./rebar3 do xref,eunit,dialyzer,proper,coveralls send

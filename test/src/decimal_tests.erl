@@ -345,6 +345,7 @@ cmp_test_() ->
          { {1,0}, {0,0},   1 },
          { {-1,0}, {0,0}, -1 },
          { {0,0}, {1,0},  -1 },
+         { {1,0}, {2,-1},  1 },
 
          { {0, -100}, {0, 100}, 0},
          { {10, 0}, {1, 1}, 0 },
@@ -365,6 +366,21 @@ cmp_test_() ->
           ]),
       fun() ->
           R = decimal:cmp(A, B, Opts)
+      end} || {A, B, R} <- Tests
+    ] ++
+    [
+     {iolist_to_binary(
+          [
+           decimal:to_binary(A),
+           case R of
+               1 -> $>;
+               0 -> $=;
+               -1 -> $<
+           end,
+           decimal:to_binary(B)
+          ]),
+      fun() ->
+          R = decimal:cmp(A, B)
       end} || {A, B, R} <- Tests
     ].
 

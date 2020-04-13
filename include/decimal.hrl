@@ -42,7 +42,7 @@
 -define(exponent(X),element(2, ?to_decimal(X))).
 -define(is_zero(X),decimal:is_zero(?to_decimal(X))).
 -define(is_signed(X),case ?sign(X) of -1 -> true; _ -> false end).
--define(cmp(X,Y),decimal:cmp(?to_decimal(X),?to_decimal(Y),?d_context)).
+-define(cmp(X,Y),decimal:cmp(?to_decimal(X),?to_decimal(Y), ?d_context)).
 -define(le(X,Y),(?cmp(X,Y) =< 0)).
 -define(lt(X,Y),(?cmp(X,Y) < 0)).
 -define(ge(X,Y),(?cmp(X,Y) >= 0)).

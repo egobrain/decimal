@@ -11,3 +11,5 @@ erl_crash.dump
 _build
 rebar.lock
 *.crashdump
+*~
+.rebar3/

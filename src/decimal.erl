@@ -18,7 +18,7 @@
 
 %% Compare
 -export([
-         cmp/2,
+         fast_cmp/2,
          cmp/3
         ]).
 
@@ -153,19 +153,19 @@ cmp(A, B, #{ precision := Precision, rounding := Rounding }) ->
     end.
 
 %% Fast compare without rounding
-cmp({0, _}, {0, _}) ->
+fast_cmp({0, _}, {0, _}) ->
     0;
-cmp({Int1, _}, {Int2, _}) when Int1 >= 0, Int2 =< 0 ->
+fast_cmp({Int1, _}, {Int2, _}) when Int1 >= 0, Int2 =< 0 ->
     1;
-cmp({Int1, _}, {Int2, _}) when Int1 =< 0, Int2 >= 0 ->
+fast_cmp({Int1, _}, {Int2, _}) when Int1 =< 0, Int2 >= 0 ->
     -1;
-cmp({Int, E}, {Int, E}) ->
+fast_cmp({Int, E}, {Int, E}) ->
     0;
-cmp({Int1, E}, {Int2, E}) when Int1 > Int2 ->
+fast_cmp({Int1, E}, {Int2, E}) when Int1 > Int2 ->
     1;
-cmp({Int1, E}, {Int2, E}) when Int1 < Int2 ->
+fast_cmp({Int1, E}, {Int2, E}) when Int1 < Int2 ->
     -1;
-cmp({Int1, E1}, {Int2, E2}) ->
+fast_cmp({Int1, E1}, {Int2, E2}) ->
     Emin = min(E1, E2),
     B1 = Int1*pow_of_ten(E1-Emin),
     B2 = Int2*pow_of_ten(E2-Emin),
@@ -256,9 +256,6 @@ zero_exp_(Base, Exp) -> {Base, Exp}.
 %% =============================================================================
 
 -spec pow_of_ten(non_neg_integer()) -> pos_integer().
-
-pow_of_ten(101) -> %speedup for default precision settings
-    100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000;
 pow_of_ten(N) ->
     if N > 0 -> int_pow(10, N, 1);
        true  -> 1

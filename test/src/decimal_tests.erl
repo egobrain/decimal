@@ -380,7 +380,7 @@ cmp_test_() ->
            decimal:to_binary(B)
           ]),
       fun() ->
-          R = decimal:cmp(A, B)
+          R = decimal:fast_cmp(A, B)
       end} || {A, B, R} <- Tests
     ].
 

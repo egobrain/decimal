@@ -4,7 +4,7 @@
 -include_lib("eunit/include/eunit.hrl").
 
 -include("decimal.hrl").
--import(decimal, [divide/3, mult/2, add/2, sub/2, cmp/2, is_zero/1, to_binary/1, to_decimal/2]).
+-import(decimal, [divide/3, mult/2, add/2, sub/2, fast_cmp/2, is_zero/1, to_binary/1, to_decimal/2]).
 
 %% check (R1 + R2) - R2 == R1
 prop_add_sub() ->
@@ -42,4 +42,4 @@ rounding_algorithm() ->
 
 eq(A,B, #{precision := P}) ->
     Diff = decimal:abs(sub(decimal:abs(A),decimal:abs(B))),
-    cmp(Diff, {1,-P}) =< 0 orelse io:format("A: ~p~nB: ~p~nDiff: ~p~nPrec: ~p~n", [A, B, Diff, P]) .
+    fast_cmp(Diff, {1,-P}) =< 0 orelse io:format("A: ~p~nB: ~p~nDiff: ~p~nPrec: ~p~n", [A, B, Diff, P]) .

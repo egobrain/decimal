@@ -226,6 +226,55 @@ divide_test_() ->
      || {A, B, R} <- Tests
     ].
 
+sqrt_test_() ->
+    Tests =
+        [
+         {<<"0">>, <<"0.0">>},
+         {<<"1">>, <<"1.0">>},
+         {<<"4">>, <<"2.0">>},
+         {<<"144">>, <<"12.0">>},
+         {<<"3086358025">>, <<"55555.0">>},
+         {<<"5">>, <<"2.23606">>},
+         {<<"0.0000000001">>, <<"0.00001">>},
+         {<<"0.00000000001">>, <<"0.0">>},
+         {<<"10000000000">>, <<"100000.0">>},
+         {<<"100000000000">>, <<"316227.0">>},
+         {<<"12345678912345">>, <<"3513640.0">>},
+         {<<"-1">>, {error, badarith}}
+        ],
+    Opts = #{ precision => 5, rounding => round_half_up},
+    [
+     {<<"sqrt(", A/binary, ")">>,
+      fun() ->
+          A1 = decimal:to_decimal(A, Opts#{precision => 25}),
+          V = try decimal:sqrt(A1, Opts) of D ->
+                  decimal:to_binary(D, #{pretty => false})
+              catch Err:Res -> {Err,Res}
+              end,
+          ?assertEqual(R, V)
+      end}
+     || {A, R} <- Tests
+    ].
+
+is_zero_test_() ->
+    Tests =
+        [
+         {<<"-0.0">>, true},
+         {<<"0">>, true},
+         {<<"0.01">>, false},
+         {<<"1">>, false},
+         {<<"-1.01">>, false}
+        ],
+    Opts = #{ precision => 5, rounding => round_half_up},
+    [
+     {<<"is_zero(", A/binary, ")">>,
+      fun() ->
+          A1 = decimal:to_decimal(A, Opts),
+          ?assertEqual(R, decimal:is_zero(A1))
+      end}
+     || {A, R} <- Tests
+    ].
+
 repeate(Ch, N) ->
     << <<Ch>> || _ <- lists:seq(1, N)>>.
 

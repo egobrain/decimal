@@ -13,7 +13,8 @@
          add/2,
          sub/2,
          mult/2,
-         divide/3
+         divide/3,
+         sqrt/2
         ]).
 
 %% Compare
@@ -125,6 +126,57 @@ divide({BaseA, ExpA},{BaseB, ExpB}, #{ precision := Precision0, rounding := Roun
     Precision = Precision0 + 1,
     BaseRes = BaseA * pow_of_ten(Precision) div BaseB,
     round(Rounding, {BaseRes, ExpA - ExpB - Precision}, Precision0).
+
+-spec sqrt(decimal(), opts()) -> decimal() | no_return(). %% @throws error(badarith)
+sqrt({M, _E}, _Context) when M < 0 ->
+    error(badarith);
+sqrt({0, _E}, _Context) ->
+    {0, 0};
+sqrt({M, E}=Decimal, #{precision := Precision0} = Context) ->
+    Precision = Precision0 + 1,
+    CoefficientDigits = length(integer_to_list(M)),
+    case E band 1 of
+        0 ->
+            Shift = Precision - ((CoefficientDigits + 1) bsr 1),
+            sqrt(Decimal, Context, Shift, M);
+        _ ->
+            Shift = Precision - ((CoefficientDigits bsr 1) + 1),
+            sqrt(Decimal, Context, Shift, M * 10)
+    end.
+
+sqrt(Decimal, Context, Shift, M) ->
+    case Shift >= 0 of
+        true ->
+            sqrt(Decimal, Context, Shift, M * pow_of_ten(Shift bsl 1), true);
+        false ->
+            Operand = pow_of_ten((- Shift) bsl 1),
+            sqrt(Decimal, Context, Shift, M div Operand, M rem Operand =:= 0)
+    end.
+
+sqrt({_, E0}, #{precision := Precision, rounding := Rounding}, Shift, M, Exact) ->
+    E = E0 bsr 1,
+    N = sqrt_loop(M, pow_of_ten(Precision + 1)),
+    Result = case Exact and (N * N =:= M) of
+        true ->
+            case Shift >= 0 of
+                true ->
+                    {N div pow_of_ten(Shift), E};
+                false ->
+                    {N * pow_of_ten(-Shift), E}
+            end;
+        false ->
+            {N, E - Shift}
+    end,
+    round(Rounding, Result, Precision).
+
+sqrt_loop(M, N) ->
+    Q = M div N,
+    case N =< Q of
+        true ->
+            N;
+        false ->
+            sqrt_loop(M, (N + Q) bsr 1)
+    end.
 
 %% = Compare ===================================================================
 

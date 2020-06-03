@@ -36,6 +36,7 @@
 -define(sub(X,Y),decimal:sub(?to_decimal(X),?to_decimal(Y))).
 -define(mult(X,Y),decimal:mult(?to_decimal(X),?to_decimal(Y))).
 -define(divide(X,Y),decimal:divide(?to_decimal(X),?to_decimal(Y),?d_context)).
+-define(sqrt(X),decimal:sqrt(?to_decimal(X),?d_context)).
 -define(abs(X),decimal:abs(?to_decimal(X))).
 -define(neg(X),decimal:minus(?to_decimal(X))).
 -define(sign(X),case element(1,?to_decimal(X))<0 of true -> -1; _ -> 1 end).

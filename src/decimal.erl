@@ -123,7 +123,7 @@ divide({M, E}, {2, 0}, #{ precision := Precision, rounding := Rounding }) when (
 divide({M, E}, {2, 0}, #{ precision := Precision, rounding := Rounding }) ->
     round(Rounding, {M * 5, E-1}, Precision);
 divide({BaseA, ExpA},{BaseB, ExpB}, #{ precision := Precision0, rounding := Rounding }) ->
-    Precision = Precision0 + 1,
+    Precision = max(0, -(ExpB - ExpA)) + Precision0 + 1,
     BaseRes = BaseA * pow_of_ten(Precision) div BaseB,
     round(Rounding, {BaseRes, ExpA - ExpB - Precision}, Precision0).
 

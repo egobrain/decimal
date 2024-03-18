@@ -98,7 +98,7 @@ parse_exp(_,_,_,_) ->
 %%% From float
 %% =============================================================================
 
-from_float(0.0) ->
+from_float(Num) when Num == 0.0 ->
     {0, 0};
 from_float(Float) when is_float(Float) ->
     {Frac, Exp} = mantissa_exponent(Float),

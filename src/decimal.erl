@@ -118,11 +118,17 @@ mult({Int1, E1}, {Int2, E2}) ->
     {Int1*Int2, E1+E2}.
 
 -spec divide(decimal(), decimal(), opts()) -> decimal().
-divide({M, E}, {2, 0}, #{ precision := Precision, rounding := Rounding }) when (M band 1) == 0 ->
-    round(Rounding, {M bsr 1, E}, Precision);
-divide({M, E}, {2, 0}, #{ precision := Precision, rounding := Rounding }) ->
-    round(Rounding, {M * 5, E-1}, Precision);
-divide({BaseA, ExpA},{BaseB, ExpB}, #{ precision := Precision0, rounding := Rounding }) ->
+divide({0, _ExpA}, {_BaseB, _ExpB}, _Opts) ->
+    {0, 0};
+divide({BaseA, ExpA}, {BaseB, ExpB}, Opts) when BaseB < 0 ->
+    divide({-BaseA, ExpA}, {-BaseB, ExpB}, Opts);
+divide({BaseA, ExpA}, {1, ExpB}, #{ precision := Precision, rounding := Rounding }) ->
+    round(Rounding, {BaseA, ExpA - ExpB}, Precision);
+divide({BaseA, ExpA}, {2, ExpB}, #{ precision := Precision, rounding := Rounding }) when (BaseA band 1) == 0 ->
+    round(Rounding, {BaseA bsr 1, ExpA - ExpB}, Precision);
+divide({BaseA, ExpA}, {2, ExpB}, #{ precision := Precision, rounding := Rounding }) ->
+    round(Rounding, {BaseA * 5, ExpA - ExpB - 1}, Precision);
+divide({BaseA, ExpA}, {BaseB, ExpB}, #{ precision := Precision0, rounding := Rounding }) ->
     Precision = max(0, -(ExpB - ExpA)) + Precision0 + 1,
     BaseRes = BaseA * pow_of_ten(Precision) div BaseB,
     round(Rounding, {BaseRes, ExpA - ExpB - Precision}, Precision0).

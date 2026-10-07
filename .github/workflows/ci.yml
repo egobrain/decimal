@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    name: OTP ${{ matrix.otp }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        otp: ['26', '27', '28', '29']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{ matrix.otp }}
+          rebar3-version: '3.27'
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cache/rebar3
+            _build
+          key: rebar3-${{ matrix.otp }}-${{ hashFiles('rebar.config') }}
+      - run: rebar3 xref
+      - run: rebar3 eunit
+      - run: rebar3 proper
+      - run: rebar3 dialyzer
+      - name: Coverage
+        if: matrix.otp == '29'
+        run: |
+          rebar3 eunit --cover
+          rebar3 proper --cover
+          rebar3 cover --verbose | tee cover.txt
+          { echo '### Coverage'; echo '```'; sed -n '/|/p' cover.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          rebar3 as test covertool generate
+          sed -i "s#filename=\"$PWD/#filename=\"#" _build/test/covertool/decimal.covertool.xml
+      - name: Upload to Coveralls
+        if: matrix.otp == '29'
+        uses: coverallsapp/github-action@v2
+        with:
+          file: _build/test/covertool/decimal.covertool.xml
+          format: cobertura
+          fail-on-error: false

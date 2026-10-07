@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/egobrain/decimal.png?branch=master)](https://travis-ci.org/egobrain/decimal.png?branch=master)
-[![Coveralls](https://img.shields.io/coveralls/egobrain/decimal.svg)](https://coveralls.io/github/egobrain/decimal)
+[![CI](https://github.com/egobrain/decimal/actions/workflows/ci.yml/badge.svg)](https://github.com/egobrain/decimal/actions/workflows/ci.yml)
+[![Coverage](https://coveralls.io/repos/github/egobrain/decimal/badge.svg?branch=master)](https://coveralls.io/github/egobrain/decimal?branch=master)
 [![GitHub tag](https://img.shields.io/github/tag/egobrain/decimal.svg)](https://github.com/egobrain/decimal)
 
 # decimal

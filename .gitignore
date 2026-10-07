@@ -13,3 +13,4 @@ rebar.lock
 *.crashdump
 *~
 .rebar3/
+*.bench

@@ -1,0 +1,52 @@
+%% Calls into decimal/decimal_conv per op for each decimal_bench case.
+%% Regenerate with `make bench-baseline` after an intended change.
+{<<"add small">>, 2}.
+{<<"add large">>, 4}.
+{<<"add huge">>, 6}.
+{<<"add exponent gap 300">>, 10}.
+{<<"sub small">>, 3}.
+{<<"sub large">>, 5}.
+{<<"mult small">>, 1}.
+{<<"mult large">>, 1}.
+{<<"mult huge">>, 1}.
+{<<"divide by 1 p28">>, 4}.
+{<<"divide by 2 p28">>, 4}.
+{<<"divide small p28">>, 11}.
+{<<"divide 1/3 p100">>, 12}.
+{<<"divide large p28">>, 11}.
+{<<"divide large p100">>, 12}.
+{<<"divide huge p100">>, 17}.
+{<<"divide 1/7 p1000">>, 15}.
+{<<"sqrt 2 p10">>, 22}.
+{<<"sqrt 2 p28">>, 25}.
+{<<"sqrt 2 p100">>, 31}.
+{<<"sqrt 2 p1000">>, 40}.
+{<<"sqrt exact 144 p28">>, 31}.
+{<<"sqrt large p28">>, 21}.
+{<<"sqrt huge p100">>, 30}.
+{<<"cmp same exponent">>, 1}.
+{<<"cmp small p28">>, 6}.
+{<<"cmp large p28">>, 8}.
+{<<"cmp huge p100">>, 25}.
+{<<"fast_cmp small">>, 2}.
+{<<"fast_cmp large">>, 4}.
+{<<"fast_cmp exponent gap 300">>, 10}.
+{<<"round round_half_up large p10">>, 7}.
+{<<"round round_half_down large p10">>, 7}.
+{<<"round round_floor large p10">>, 7}.
+{<<"round round_ceiling large p10">>, 7}.
+{<<"round round_down large p10">>, 7}.
+{<<"round half_up huge p100">>, 12}.
+{<<"reduce no zeros">>, 2}.
+{<<"reduce 50 trailing zeros">>, 52}.
+{<<"to_binary small">>, 2}.
+{<<"to_binary large">>, 2}.
+{<<"to_binary huge">>, 2}.
+{<<"to_binary scientific">>, 2}.
+{<<"to_decimal binary small p28">>, 11}.
+{<<"to_decimal binary large p28">>, 46}.
+{<<"to_decimal binary huge p100">>, 1016}.
+{<<"to_decimal binary scientific p28">>, 35}.
+{<<"to_decimal list p28">>, 11}.
+{<<"to_decimal float p28">>, 23}.
+{<<"to_decimal integer p28">>, 3}.
